@@ -1,0 +1,10 @@
+dist/
+.vite
+.idea
+node_modules/
+.eslintrc.cjs
+postcss.config.js
+tailwind.config.js
+vite.config.ts
+
+/.env
