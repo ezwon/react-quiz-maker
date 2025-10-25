@@ -33,6 +33,8 @@ Based on my experience, this is easier to maintain and understand by new devs jo
 
 - Required UX outline or flow for creating quiz would be possible if api endpoint supports array of question so it can be included on the create payload.
 - Implemented creation of Quiz first before adding the question items.
+- I created a simple keylogger component for detecting ketstrokes
+- I implemented a full-screen detection feature and force to full screen mode while answering the quiz. I got this idea on other online tech exam :)
 - I enjoy working on this tech exam and also learned new things on TanStack Query :)
 
  
