@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import dayjs from 'dayjs';
-import { Button, Form, Modal, Steps } from 'antd';
+import { Button, Form, Modal, Steps, Typography } from 'antd';
 
 import { useGetQuizItem } from 'features/quizzes/hooks';
 import {
-  useAttemptAnswer,
+  useAttemptAnswerQuestion,
   useAttemptStart,
   useAttemptSubmit,
   useAttemptRecordEvent,
@@ -14,6 +14,8 @@ import { handleApiMutationError } from 'utils/helper';
 import { useUpdateEffect } from 'react-use';
 
 import KeyLogger from 'features/attempts/components/KeyLogger';
+import Countdown from 'features/quizzes/components/Countdown';
+import AnswerQuestions from 'features/quizzes/components/AnswerQuestions';
 
 type Props = {
   onClose: () => void;
@@ -26,6 +28,7 @@ const LaunchQuizModal: React.FC<Props> = ({ quizId, onClose }) => {
 
   const [current, setCurrent] = useState(0);
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
+  const [isFinished, setIsFinished] = useState<boolean>(false);
   const [attemptId, setAttemptId] = useState<number | null>(null);
 
   const recordEvent = useAttemptRecordEvent({
@@ -40,18 +43,23 @@ const LaunchQuizModal: React.FC<Props> = ({ quizId, onClose }) => {
         attemptId: data.id,
         event: `Started attempt id: ${data.id} at ${data.startedAt}`,
       });
+      handle.enter();
     },
     onError: (error) => {
       handleApiMutationError('Start Attempt', error);
     },
   });
   const submitAttempt = useAttemptSubmit({
-    onSuccess: (data) => {},
+    onSuccess: (data) => {
+      console.log('submitAttempt: ', data);
+      setIsFinished(true);
+    },
     onError: (error) => {
+      setIsFinished(true);
       handleApiMutationError('Submit Attempt', error);
     },
   });
-  const answerQuestion = useAttemptAnswer({
+  const answerQuestion = useAttemptAnswerQuestion({
     onSuccess: (data) => {
       console.log('answerQuestion: ', data);
     },
@@ -65,20 +73,29 @@ const LaunchQuizModal: React.FC<Props> = ({ quizId, onClose }) => {
 
   const handleCloseModal = () => {
     onClose?.();
+    setAttemptId(null);
   };
 
   const handleStartAttempt = () => {
-    handle.enter();
     startAttempt.mutate(quizId);
   };
 
   const handleSubmitAttempt = () => {
     submitAttempt.mutate(attemptId);
+    handle.exit();
     recordEvent.mutate({
       attemptId,
       event: `Attempt id: ${attemptId} submitted at ${dayjs().format(
         'YYYY-MM-DD HH:mm:ss',
       )}`,
+    });
+  };
+
+  const handleSubmitAnswer = (questionId, value) => {
+    answerQuestion.mutate({
+      attemptId,
+      questionId,
+      value,
     });
   };
 
@@ -91,8 +108,27 @@ const LaunchQuizModal: React.FC<Props> = ({ quizId, onClose }) => {
       title: 'Progress',
       content: (
         <FullScreen onChange={setIsFullScreen} handle={handle}>
-          <div className="h-full w-full bg-gray-200">
-            Question Answer Component
+          <div
+            className={`relative flex w-full flex-col justify-start bg-gray-200 ${
+              isFullScreen ? 'h-full' : 'h-[400px]'
+            }`}
+          >
+            {attemptId && !isFinished && (
+              <Typography.Text className="absolute left-0 w-full pt-[10px] text-[90px] ">
+                <Countdown seconds={quizDetails?.timeLimitSeconds} />
+              </Typography.Text>
+            )}
+
+            <div
+              className={`mx-auto w-full ${isFullScreen ? '' : 'invisible'}`}
+            >
+              <AnswerQuestions
+                questions={quizDetails?.questions ?? []}
+                submitAttempt={handleSubmitAttempt}
+                submitAnswer={handleSubmitAnswer}
+              />
+            </div>
+
             <KeyLogger
               recordEvent={(keyEvent) =>
                 recordEvent.mutate({
@@ -134,9 +170,6 @@ const LaunchQuizModal: React.FC<Props> = ({ quizId, onClose }) => {
     marginTop: 16,
   };
 
-  // eslint-disable-next-line no-console
-  console.log({ quizDetails });
-
   return (
     <Modal
       title={null}
@@ -172,18 +205,11 @@ const LaunchQuizModal: React.FC<Props> = ({ quizId, onClose }) => {
               loading={startAttempt.isPending}
               onClick={handleStartAttempt}
             >
-              Start Quiz
+              {attemptId ? 'Resume ' : 'Start '}Quiz
             </Button>
           )}
         </div>
         <div className="flex items-center justify-end gap-x-2 align-middle ">
-          <Button
-            disabled={current !== 2}
-            type="primary"
-            onClick={handleSubmitAttempt}
-          >
-            Submit Attempt
-          </Button>
           <Button onClick={handleCloseModal}>Close Quiz</Button>
         </div>
       </div>

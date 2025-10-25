@@ -27,7 +27,7 @@ export const useAttemptStart = ({
   });
 };
 
-export const useAttemptAnswer = ({
+export const useAttemptAnswerQuestion = ({
   onSuccess,
   onError,
 }: {
