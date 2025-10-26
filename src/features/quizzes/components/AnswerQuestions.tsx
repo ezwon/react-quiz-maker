@@ -1,10 +1,10 @@
 import React from 'react';
-import { Typography, Form, Radio, Button, notification } from 'antd';
+import { Typography, Form, Radio, Button } from 'antd';
 
 type Props = {
   questions: any[];
   submitAnswer?: (questionId: number, value: number) => void;
-  submitAttempt?: () => void;
+  submitAttempt?: (answerValues: any) => void;
 };
 
 const AnswerQuestions: React.FC<Props> = ({
@@ -32,7 +32,8 @@ const AnswerQuestions: React.FC<Props> = ({
       if (currentQuestionIndex < questions.length - 1) {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
       } else {
-        submitAttempt?.();
+        // Submit Attempt after answering the last question
+        submitAttempt?.(values);
         setCurrentQuestionIndex(0);
       }
     }

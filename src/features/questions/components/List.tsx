@@ -121,7 +121,6 @@ const QuestionList: React.FC<Props> = ({ quiz }) => {
       <Table<any>
         size="small"
         bordered
-        virtual
         loading={deleteQuestion.isPending}
         showSorterTooltip={false}
         dataSource={filteredData}
